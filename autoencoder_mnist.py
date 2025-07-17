@@ -4,11 +4,13 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
+import os
 
 # 하이퍼파라미터
 batch_size = 128
-epochs = 10
+epochs = 20
 learning_rate = 1e-3
+folder_path = 'result'
 
 # MNIST 데이터셋 로드
 transform = transforms.ToTensor()
@@ -23,11 +25,11 @@ class AutoEncoder(nn.Module):
         super(AutoEncoder, self).__init__()
         self.encoder = nn.Sequential(
             nn.Linear(28*28, 128),
-            nn.ReLU(),
+            nn.GELU(),
             nn.Linear(128, 64),
-            nn.ReLU(),
+            nn.GELU(),
             nn.Linear(64, 12),
-            nn.ReLU(),
+            nn.GELU(),
             nn.Linear(12, 3)
         )
         self.decoder = nn.Sequential(
@@ -67,6 +69,11 @@ def train():
             optimizer.step()
             running_loss += loss.item()
         print(f'Epoch [{epoch}/{epochs}], Loss: {running_loss/len(train_loader):.4f}')
+    # 학습 종료 후 가중치 저장
+    weight_path = os.path.join(folder_path, "weight")
+    if not os.path.exists(weight_path):
+        os.makedirs(weight_path)
+    torch.save(model.state_dict(), os.path.join(weight_path, 'autoencoder_weights.pth'))
 
 # 테스트 및 결과 시각화
 def test_and_plot():
@@ -78,6 +85,11 @@ def test_and_plot():
             break  # 첫 배치만 시각화
     images = images.cpu().numpy()
     outputs = outputs.cpu().numpy()
+    
+    # result 폴더 생성
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+        
     fig, axes = plt.subplots(2, 10, figsize=(15, 3))
     for i in range(10):
         axes[0, i].imshow(images[i].reshape(28, 28), cmap='gray')
@@ -88,6 +100,16 @@ def test_and_plot():
     axes[1, 0].set_ylabel('복원')
     plt.show()
 
+    # 결과 저장 및 출력
+    plt.savefig(os.path.join(folder_path, 'autoencoder_results.png'))
+
 if __name__ == '__main__':
+    # 학습 수행
     train()
-    test_and_plot() 
+    
+    # 저장된 가중치 불러오기
+    weight_path = os.path.join(folder_path, "weight", "autoencoder_weights.pth")
+    model.load_state_dict(torch.load(weight_path))
+    
+    # 테스트 및 시각화
+    test_and_plot()
