@@ -19,3 +19,13 @@ ENV/
 
 # 데이터 폴더
 /data/ 
+
+# 결과 폴더
+/result/
+
+# 가중치 폴더
+/weight/
+
+# 파일
+*.png
+*.pth
