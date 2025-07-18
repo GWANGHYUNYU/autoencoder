@@ -1,3 +1,5 @@
+#%%
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -6,6 +8,7 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import os
 
+#%%
 # 하이퍼파라미터
 batch_size = 128
 epochs = 20
@@ -34,11 +37,11 @@ class AutoEncoder(nn.Module):
         )
         self.decoder = nn.Sequential(
             nn.Linear(3, 12),
-            nn.ReLU(),
+            nn.GELU(),
             nn.Linear(12, 64),
-            nn.ReLU(),
+            nn.GELU(),
             nn.Linear(64, 128),
-            nn.ReLU(),
+            nn.GELU(),
             nn.Linear(128, 28*28),
             nn.Sigmoid()
         )
@@ -73,7 +76,7 @@ def train():
     weight_path = os.path.join(folder_path, "weight")
     if not os.path.exists(weight_path):
         os.makedirs(weight_path)
-    torch.save(model.state_dict(), os.path.join(weight_path, 'autoencoder_weights.pth'))
+    torch.save(model.state_dict(), os.path.join(weight_path, 'autoencoder_weights_GELU.pth'))
 
 # 테스트 및 결과 시각화
 def test_and_plot():
@@ -81,34 +84,36 @@ def test_and_plot():
     with torch.no_grad():
         for images, _ in test_loader:
             images = images.to(device)
-            outputs = model(images)
+            _, outputs = model(images)
             break  # 첫 배치만 시각화
     images = images.cpu().numpy()
     outputs = outputs.cpu().numpy()
-    
+
     # result 폴더 생성
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
         
-    fig, axes = plt.subplots(2, 10, figsize=(15, 3))
-    for i in range(10):
+    fig, axes = plt.subplots(2, 8, figsize=(15, 3))
+    for i in range(8):
         axes[0, i].imshow(images[i].reshape(28, 28), cmap='gray')
-        axes[0, i].axis('off')
+        axes[0, i].set_xticks([])
+        axes[0, i].set_yticks([])
         axes[1, i].imshow(outputs[i].reshape(28, 28), cmap='gray')
-        axes[1, i].axis('off')
-    axes[0, 0].set_ylabel('입력')
-    axes[1, 0].set_ylabel('복원')
+        axes[1, i].set_xticks([])
+        axes[1, i].set_yticks([])
+    axes[0, 0].set_ylabel('Input')
+    axes[1, 0].set_ylabel('Generated')
     plt.show()
 
     # 결과 저장 및 출력
-    plt.savefig(os.path.join(folder_path, 'autoencoder_results.png'))
+    plt.savefig(os.path.join(folder_path, 'autoencoder_results_GELU.png'))
 
 if __name__ == '__main__':
     # 학습 수행
     train()
     
     # 저장된 가중치 불러오기
-    weight_path = os.path.join(folder_path, "weight", "autoencoder_weights.pth")
+    weight_path = os.path.join(folder_path, "weight", "autoencoder_weights_GELU.pth")
     model.load_state_dict(torch.load(weight_path))
     
     # 테스트 및 시각화
